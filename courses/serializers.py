@@ -4,6 +4,7 @@ from rest_framework.serializers import ModelSerializer
 from courses.models import (
     Category,
     Course,
+    Lesson,
 )
 
 
@@ -29,3 +30,9 @@ class CourseSerializer(ModelSerializer):
     class Meta:
         model = Course
         fields = ('id', 'subject', 'image', 'created_at', 'category')
+
+
+class LessonSerializer(ModelSerializer):
+    class Meta:
+        model = Lesson
+        fields = ('id', 'subject', 'image', 'created_at', 'updated_at', 'course')

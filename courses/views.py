@@ -1,7 +1,10 @@
 from rest_framework import (
     viewsets,
     generics,
+    status,
 )
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from courses.models import (
     Category,
@@ -11,6 +14,7 @@ from courses.paginator import BasePagination
 from courses.serializers import (
     CategorySerializer,
     CourseSerializer,
+    LessonSerializer,
 )
 
 
@@ -35,3 +39,14 @@ class CourseViewSet(viewsets.ViewSet, generics.ListAPIView):
             courses = courses.filter(category_id=category_id)
 
         return courses
+
+    @action(methods=['GET'], detail=True, url_path='lessons')
+    def get_lessons(self, request, pk):
+        course = Course.objects.get(pk=pk)
+        lessons = course.lessons.filter(active=True)
+
+        q = request.query_params.get('q')
+        if q is not None:
+            lessons = lessons.filter(subject__contains=q)
+
+        return Response(LessonSerializer(lessons, many=True).data, status=status.HTTP_200_OK)

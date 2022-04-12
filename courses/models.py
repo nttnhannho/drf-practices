@@ -34,3 +34,11 @@ class Course(MyModelBase):
 
     description = models.TextField(null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
+
+
+class Lesson(MyModelBase):
+    class Meta:
+        unique_together = ('subject', 'course')
+
+    content = models.TextField()
+    course = models.ForeignKey(Course, related_name='lessons', on_delete=models.CASCADE)
