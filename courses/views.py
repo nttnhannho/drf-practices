@@ -1,3 +1,4 @@
+from django.http import Http404
 from rest_framework import (
     viewsets,
     generics,
@@ -9,12 +10,15 @@ from rest_framework.response import Response
 from courses.models import (
     Category,
     Course,
+    Lesson,
+    Tag,
 )
 from courses.paginator import BasePagination
 from courses.serializers import (
     CategorySerializer,
     CourseSerializer,
     LessonSerializer,
+    LessonDetailSerializer,
 )
 
 
@@ -50,3 +54,26 @@ class CourseViewSet(viewsets.ViewSet, generics.ListAPIView):
             lessons = lessons.filter(subject__contains=q)
 
         return Response(LessonSerializer(lessons, many=True).data, status=status.HTTP_200_OK)
+
+
+class LessonViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
+    queryset = Lesson.objects.filter(active=True)
+    serializer_class = LessonDetailSerializer
+
+    @action(methods=['POST'], detail=True, url_path='tags')
+    def add_tag(self, request, pk):
+        try:
+            lesson = self.get_object()
+        except Http404:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            tags = request.data.get('tags')
+            if tags is not None:
+                for tag in tags:
+                    t, _ = Tag.objects.get_or_create(name=tag)
+                    lesson.tags.add(t)
+                lesson.save()
+
+                return Response(self.serializer_class(lesson).data, status=status.HTTP_201_CREATED)
+
+            return Response(status=status.HTTP_404_NOT_FOUND)

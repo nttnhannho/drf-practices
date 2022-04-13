@@ -1,3 +1,7 @@
 
 ?
 courses/apps.py,9/3/937f70273a745d044be6329c046050d08ad04961
+@
+requirements.txt,1/9/19359a61ae2446b51b549167b014da2fcf265768
+@
+courses/tests.py,1/9/19b8eaf3b198810a3519b3f54563928828b71d7d
