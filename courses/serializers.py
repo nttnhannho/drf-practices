@@ -6,6 +6,7 @@ from courses.models import (
     Course,
     Lesson,
     Tag,
+    User,
 )
 
 
@@ -51,3 +52,19 @@ class LessonDetailSerializer(LessonSerializer):
     class Meta:
         model = LessonSerializer.Meta.model
         fields = LessonSerializer.Meta.fields + ['content', 'tags']
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'first_name', 'last_name', 'username', 'password', 'email', 'date_joined')
+        extra_kwargs = {
+            'password': {'write_only': 'true'}
+        }
+
+    def create(self, validated_data):
+        user = User(**validated_data)
+        user.set_password(user.password)
+        user.save()
+
+        return user

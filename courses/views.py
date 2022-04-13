@@ -3,15 +3,18 @@ from rest_framework import (
     viewsets,
     generics,
     status,
+    permissions,
 )
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework import views
 
 from courses.models import (
     Category,
     Course,
     Lesson,
     Tag,
+    User,
 )
 from courses.paginator import BasePagination
 from courses.serializers import (
@@ -19,7 +22,9 @@ from courses.serializers import (
     CourseSerializer,
     LessonSerializer,
     LessonDetailSerializer,
+    UserSerializer,
 )
+from django.conf import settings
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -77,3 +82,23 @@ class LessonViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
                 return Response(self.serializer_class(lesson).data, status=status.HTTP_201_CREATED)
 
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
+    queryset = User.objects.filter(is_active=True)
+    serializer_class = UserSerializer
+
+    def get_permissions(self):
+        if self.action == 'get_current_user':
+            return [permissions.IsAuthenticated()]
+
+        return [permissions.AllowAny()]
+
+    @action(methods=['GET'], detail=False, url_path='current-user')
+    def get_current_user(self, request):
+        return Response(self.serializer_class(request.user).data, status=status.HTTP_200_OK)
+
+
+class AuthInfo(views.APIView):
+    def get(self, request):
+        return Response(settings.OAUTH2_INFO, status=status.HTTP_200_OK)

@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'courses.apps.CoursesConfig',
     'rest_framework',
+    'drf_yasg',
+    'oauth2_provider',
 ]
 
 MIDDLEWARE = [
@@ -126,3 +128,18 @@ MEDIA_ROOT = f'{BASE_DIR}/courses/static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    )
+}
+
+OAUTH2_INFO = {
+    'client_id': 'RJsRPNHYag0itGi6fNZ3MPhaOPUeImbgII7HWwSq',
+    'client_secret': 'SulkrEp8ILmwZSIZX6Mkfbh5aevWZMgDjbskSqCpaCWuwuJH5K9jr8dmETLzwusrDhiowY8KYZ3AMFIJTfhY2k8nsGrO1yPKYVUmnwoDsJVyldJgvOm1iv7EaiNNOgFQ',
+}
+
+# OAUTH2_PROVIDER = {
+#     'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore'
+# }
