@@ -1,3 +1,4 @@
+from django.db.models import F
 from django.http import Http404
 from rest_framework import (
     viewsets,
@@ -7,7 +8,6 @@ from rest_framework import (
 )
 from rest_framework.decorators import (
     action,
-    permission_classes,
 )
 from rest_framework.response import Response
 from rest_framework import views
@@ -19,6 +19,9 @@ from courses.models import (
     Tag,
     User,
     Comment,
+    Reaction,
+    Rating,
+    LessonView,
 )
 from courses.paginator import BasePagination
 from courses.serializers import (
@@ -28,6 +31,9 @@ from courses.serializers import (
     LessonDetailSerializer,
     UserSerializer,
     CommentSerializer,
+    ReactionSerializer,
+    RatingSerializer,
+    LessonViewSerializer,
 )
 from django.conf import settings
 
@@ -71,7 +77,7 @@ class LessonViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
     serializer_class = LessonDetailSerializer
 
     def get_permissions(self):
-        if self.action == 'add_comment':
+        if self.action in ('add_comment', 'react', 'rate'):
             return [permissions.IsAuthenticated()]
 
         return [permissions.AllowAny()]
@@ -103,6 +109,38 @@ class LessonViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
             return Response(CommentSerializer(c).data, status=status.HTTP_200_OK)
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['POST'], detail=True, url_path='reactions')
+    def react(self, request, pk):
+        try:
+            type = int(request.data['type'])
+        except (IndexError, ValueError):
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        else:
+            reaction = Reaction.objects.create(type=type, lesson=self.get_object(), creator=request.user)
+
+            return Response(ReactionSerializer(reaction).data, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=True, url_path='ratings')
+    def rate(self, request, pk):
+        try:
+            rating = int(request.data['rating'])
+        except (IndexError, ValueError):
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        else:
+            rating = Rating.objects.create(rating=rating, lesson=self.get_object(), creator=request.user)
+
+            return Response(RatingSerializer(rating).data, status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], detail=True, url_path='views')
+    def increase_view(self, request, pk):
+        view, created = LessonView.objects.get_or_create(lesson=self.get_object())
+        view.views = F('views') + 1
+        view.save()
+
+        view.refresh_from_db()
+
+        return Response(LessonViewSerializer(view).data, status=status.HTTP_200_OK)
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):

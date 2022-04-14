@@ -1,3 +1,5 @@
+from random import choices
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -58,3 +60,34 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.content
+
+
+class ActionBase(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
+
+
+class Reaction(ActionBase):
+    LIKE, HAHA, HEART = range(3)
+    REACTION = (
+        (LIKE, 'like'),
+        (HAHA, 'haha'),
+        (HEART, 'heart'),
+    )
+    type = models.PositiveSmallIntegerField(choices=REACTION, default=LIKE)
+
+
+class Rating(ActionBase):
+    rating = models.PositiveSmallIntegerField(default=0)
+
+
+class LessonView(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    views = models.IntegerField(default=0)
+    lesson = models.OneToOneField(Lesson, on_delete=models.CASCADE)

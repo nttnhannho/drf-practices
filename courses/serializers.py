@@ -8,6 +8,9 @@ from courses.models import (
     Tag,
     User,
     Comment,
+    Reaction,
+    Rating,
+    LessonView,
 )
 
 
@@ -75,3 +78,21 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('id', 'content', 'created_at', 'updated_at')
+
+
+class ReactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reaction
+        fields = ('id', 'type', 'created_at')
+
+
+class RatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rating
+        fields = ('id', 'rating', 'created_at')
+
+
+class LessonViewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LessonView
+        fields = ('id', 'views', 'lesson')
