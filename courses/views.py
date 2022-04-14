@@ -5,7 +5,10 @@ from rest_framework import (
     status,
     permissions,
 )
-from rest_framework.decorators import action
+from rest_framework.decorators import (
+    action,
+    permission_classes,
+)
 from rest_framework.response import Response
 from rest_framework import views
 
@@ -15,6 +18,7 @@ from courses.models import (
     Lesson,
     Tag,
     User,
+    Comment,
 )
 from courses.paginator import BasePagination
 from courses.serializers import (
@@ -23,6 +27,7 @@ from courses.serializers import (
     LessonSerializer,
     LessonDetailSerializer,
     UserSerializer,
+    CommentSerializer,
 )
 from django.conf import settings
 
@@ -65,6 +70,12 @@ class LessonViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
     queryset = Lesson.objects.filter(active=True)
     serializer_class = LessonDetailSerializer
 
+    def get_permissions(self):
+        if self.action == 'add_comment':
+            return [permissions.IsAuthenticated()]
+
+        return [permissions.AllowAny()]
+
     @action(methods=['POST'], detail=True, url_path='tags')
     def add_tag(self, request, pk):
         try:
@@ -82,6 +93,16 @@ class LessonViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
                 return Response(self.serializer_class(lesson).data, status=status.HTTP_201_CREATED)
 
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @action(methods=['POST'], detail=True, url_path='comments')
+    def add_comment(self, request, pk):
+        content = request.data.get('content')
+        if content:
+            c = Comment.objects.create(content=content, lesson=self.get_object(), creator=request.user)
+
+            return Response(CommentSerializer(c).data, status=status.HTTP_200_OK)
+
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
@@ -102,3 +123,21 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
 class AuthInfo(views.APIView):
     def get(self, request):
         return Response(settings.OAUTH2_INFO, status=status.HTTP_200_OK)
+
+
+class CommentViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def destroy(self, request, *args, **kwargs):
+        if request.user == self.get_object().creator:
+            return super().destroy(request, *args, **kwargs)
+
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def partial_update(self, request, *args, **kwargs):
+        if request.user == self.get_object().creator:
+            return super().partial_update(request, *args, **kwargs)
+
+        return Response(status=status.HTTP_403_FORBIDDEN)

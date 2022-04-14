@@ -7,6 +7,7 @@ from courses.models import (
     Lesson,
     Tag,
     User,
+    Comment,
 )
 
 
@@ -68,3 +69,9 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
 
         return user
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ('id', 'content', 'created_at', 'updated_at')
